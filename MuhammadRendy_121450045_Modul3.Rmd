@@ -1,0 +1,860 @@
+---
+title: "Work Hehe"
+output:
+  html_document: default
+  pdf_document: default
+date: "2023-03-03"
+---
+
+Dataset HR adalah kumpulan data yang berisi informasi tentang karyawan sebuah perusahaan fiktif. Dataset ini terdiri dari 1470 baris dan 35 kolom. Setiap baris mewakili satu karyawan dan setiap kolom berisi informasi tentang karyawan tersebut.
+
+Beberapa variabel penting dalam dataset ini antara lain:
+
+Age: Usia karyawan dalam tahun
+
+Attrition: Apakah karyawan tersebut keluar dari perusahaan atau tidak (Yes/No)
+
+BusinessTravel: Tingkat perjalanan bisnis yang dilakukan karyawan (Travel_Rarely, Travel_Frequently, Non-Travel)
+
+Department: Departemen tempat karyawan bekerja (Sales, Research & Development, Human Resources)
+
+DistanceFromHome: Jarak tempat tinggal karyawan dengan lokasi kerja
+
+Education: Tingkat pendidikan karyawan (1 = 'Below College', 2 = 'College', 3 = 'Bachelor', 4 = 'Master', 5 = 'Doctor')
+
+EnvironmentSatisfaction: Kepuasan karyawan dengan lingkungan kerja (1 = 'Low', 2 = 'Medium', 3 = 'High', 4 = 'Very High')
+
+JobInvolvement: Tingkat keterlibatan karyawan dalam pekerjaannya (1 = 'Low', 2 = 'Medium', 3 = 'High', 4 = 'Very High')
+
+JobLevel: Tingkat posisi pekerjaan karyawan dalam perusahaan (1 = 'Entry Level', 2 = 'Intermediate Level', 3 = 'Manager', 4 = 'Director', 5 = 'Executive')
+
+JobSatisfaction: Tingkat kepuasan karyawan dengan pekerjaannya (1 = 'Low', 2 = 'Medium', 3 = 'High', 4 = 'Very High')
+
+MaritalStatus: Status pernikahan karyawan (Single, Married, Divorced)
+
+MonthlyIncome: Gaji bulanan karyawan dalam USD
+
+NumCompaniesWorked: Jumlah perusahaan yang pernah dipekerjakan oleh karyawan sebelumnya
+
+OverTime: Apakah karyawan tersebut bekerja lembur atau tidak (Yes/No)
+
+TotalWorkingYears: Total tahun bekerja karyawan
+
+YearsAtCompany: Total tahun bekerja karyawan di perusahaan tersebut
+
+YearsInCurrentRole: Total tahun karyawan bekerja di jabatan saat ini
+
+YearsSinceLastPromotion: Total tahun sejak karyawan terakhir kali mendapat promosi
+
+YearsWithCurrManager: Total tahun bekerja karyawan di bawah manajer saat ini
+
+Dataset HR digunakan untuk melakukan analisis karyawan yang keluar dari perusahaan dan memprediksi kemungkinan seorang karyawan untuk keluar dari perusahaan berdasarkan informasi yang terkandung dalam data.
+
+## import library
+```{r}
+library(ggplot2)
+library(dplyr)
+library(rlist)
+library(MASS)
+library(caret)
+library(tidyverse)
+library(gains)
+library(leaps)
+library(pROC)
+library(rpart)
+library(rpart.plot)
+library(ROSE)
+
+
+```
+
+
+```{r}
+hr <- read.csv("C:/Users/Repets/Downloads/HR.csv", stringsAsFactors = TRUE)
+hr_data<-hr
+hr.df<-hr
+hr_data<-hr
+hr$Education <- as.factor(hr$Education)
+hr$EnvironmentSatisfaction <- as.factor(hr$EnvironmentSatisfaction)
+hr$JobInvolvement <- as.factor(hr$JobInvolvement)
+hr$JobLevel <- as.factor(hr$JobLevel)
+hr$JobSatisfaction <- as.factor(hr$JobSatisfaction)
+hr$PerformanceRating <- as.factor(hr$PerformanceRating)
+hr$RelationshipSatisfaction <- as.factor(hr$RelationshipSatisfaction)
+hr$StockOptionLevel <- as.factor(hr$StockOptionLevel)
+hr$WorkLifeBalance <- as.factor(hr$WorkLifeBalance)
+
+```
+
+Kode program di atas digunakan untuk membaca file csv HR.csv dan menyimpannya dalam variabel hr. Kemudian, variabel hr_data, dan hr.df juga dibuat dengan menyalin nilai dari variabel hr. Selanjutnya, beberapa variabel dalam dataset diubah tipe datanya menjadi faktor dengan menggunakan fungsi as.factor(). Variabel-variabel tersebut antara lain Education, EnvironmentSatisfaction, JobInvolvement, JobLevel, JobSatisfaction, PerformanceRating, RelationshipSatisfaction, StockOptionLevel, dan WorkLifeBalance. Hal ini dilakukan karena variabel-variabel tersebut sebenarnya merepresentasikan kategori atau faktor. Dengan mengubah tipe datanya menjadi faktor, maka memudahkan dalam analisis selanjutnya karena variabel tersebut sudah dapat dianggap sebagai variabel kategorikal.
+
+Untuk mengetahui apakah suatu variabel numerik pada dataset seharusnya diperlakukan sebagai variabel kategori atau faktor, dapat dilihat dari sifat atau karakteristik data itu sendiri. Jika data hanya terdiri dari sejumlah nilai atau kategori terbatas, maka variabel tersebut seharusnya diperlakukan sebagai variabel kategori atau faktor.
+
+
+
+
+```{r}
+fact_variables <- c('WorkLifeBalance','StockOptionLevel','PerformanceRating',
+                    'JobSatisfaction','RelationshipSatisfaction','JobLevel',
+                    'JobInvolvement','EnvironmentSatisfaction','Education')
+hr_data[,fact_variables] <- lapply(hr_data[,fact_variables] , factor)
+
+```
+
+mengubah tipe data dari kolom-kolom yang terdapat dalam variabel fact_variables menjadi tipe data faktor.
+
+Faktor dalam R adalah tipe data yang digunakan untuk menyimpan variabel kategorikal atau kualitatif dengan nilai-nilai diskrit yang terbatas. Penggunaan tipe data faktor dapat membantu mempercepat analisis data dan menghemat ruang penyimpanan, terutama jika variabel tersebut memiliki banyak nilai yang berbeda.
+
+lapply() adalah sebuah fungsi bawaan R yang digunakan untuk menerapkan fungsi tertentu ke setiap elemen dalam list atau data frame. Pada kode di atas, lapply() digunakan untuk mengaplikasikan fungsi factor ke setiap kolom dalam data frame hr_data yang terdapat dalam variabel fact_variables. Dengan demikian, setiap kolom dalam hr_data yang termasuk dalam variabel fact_variables akan berubah menjadi tipe data faktor.
+
+
+
+
+```{r}
+names(hr)[1] <- "Age"
+```
+
+mengubah nama kolom pertama dari data frame hr menjadi "Age". Secara khusus, fungsi names() digunakan untuk mengakses atau mengubah nama kolom dalam sebuah data frame, sedangkan angka dalam tanda kurung siku menunjukkan indeks kolom yang ingin diubah. Dalam hal ini, kode names(hr)[1] merujuk pada nama kolom pertama dalam data frame hr, dan kode "Age" digunakan untuk mengganti nama tersebut dengan "Age". Sebagai hasilnya, nama kolom pertama dari data frame hr menjadi "Age".
+
+
+
+## A look at the Attrition distribution
+```{r}
+a <-ggplot(hr, aes(x= Attrition)) +
+  geom_bar()
+a+ labs(x="Attrition")
+```
+Grafik ini menampilkan jumlah karyawan yang terjadi atrisi dan yang tidak terjadi atrisi.
+Dapat dilihat bahwa jumlah karyawan yang tidak terjadi atrisi jauh lebih banyak dibandingkan dengan jumlah karyawan yang terjadi atrisi.
+
+Description of Metadata:
+
+Education: 1 ‘Below College’, 2 ‘College’, 3 ‘Bachelor’, 4 ‘Master’, 5 ‘Doctor’ EnvironmentSatisfaction: 1 ‘Low’, 2 ‘Medium’, 3 ‘High’, 4 ‘Very High’ JobInvolvement: 1 ‘Low’, 2 ‘Medium’, 3 ‘High’, 4 ‘Very High’ JobSatisfaction: 1 ‘Low’, 2 ‘Medium’, 3 ‘High’, 4 ‘Very High’ PerformanceRating: 1 ‘Low’, 2 ‘Good’, 3 ‘Excellent’, 4 ‘Outstanding’ RelationshipSatisfaction: 1 ‘Low’, 2 ‘Medium’, 3 ‘High’, 4 ‘Very High’ WorkLifeBalance: 1 ‘Bad’, 2 ‘Good’, 3 ‘Better’, 4 ‘Best’
+
+A glance at top 6 observations in the dataset:
+
+Changing the datatype of few columns:
+
+A few columns in the dataset that were supposed to be categorical are in numeric datatype, converting them into factors with the code below:
+
+## Plot of Age faceted by Attrition
+```{r}
+
+ggplot(hr, aes(x= Age)) +
+  geom_histogram() + facet_wrap(~ Attrition)
+
+```
+
+Grafik ini menampilkan persebaran umur karyawan yang terjadi atrisi dan yang tidak terjadi atrisi.
+Dapat dilihat bahwa persebaran umur karyawan yang terjadi atrisi lebih banyak pada rentang umur 25-35 tahun dibandingkan dengan yang tidak terjadi atrisi.
+
+Kode tersebut menggunakan package ggplot2 untuk membuat histogram dengan variabel Age pada data hr dengan hasil yang difasilitasi dengan menggunakan facet_wrap() untuk memisahkan histogram berdasarkan variabel Attrition.
+
+Pada hasil visualisasi yang dihasilkan, histogram yang menampilkan variabel Age terbagi menjadi dua bagian, yaitu untuk karyawan yang bertahan(no) dan karyawan yang keluar(yes) dari perusahaan. Dari hasil visualisasi tersebut, dapat dilihat bahwa karyawan yang keluar dari perusahaan cenderung berusia lebih muda dibandingkan dengan karyawan yang bertahan di perusahaan. Hal ini dapat dijadikan sebagai bahan evaluasi bagi perusahaan terkait dengan faktor-faktor yang mempengaruhi keputusan karyawan untuk keluar dari perusahaan, termasuk di antaranya faktor usia.
+
+
+
+```{r}
+options(scipen=999)          
+E <- hr %>%
+  group_by(Attrition) %>%
+  summarise(median(Age))
+E
+```
+Dapat dilihat bahwa median umur karyawan yang terjadi atrisi lebih rendah dibandingkan dengan yang tidak terjadi atrisi.
+
+## Proportion of Attrition by department
+```{r}
+ggplot(hr, aes(x=Department, fill = Attrition)) + geom_bar(position = "fill") +
+  ylab("proportion")
+```
+
+Grafik ini menampilkan proporsi karyawan yang terjadi atrisi dan tidak terjadi atrisi berdasarkan departemen. Dapat dilihat bahwa proporsi karyawan yang terjadi atrisi cenderung lebih tinggi pada departemen HR, R&D, dan Sales dibandingkan dengan departemen lainnya.
+
+
+
+## Proportion of Attrition by Business Travel
+```{r}
+ggplot(hr, aes(x=BusinessTravel, fill = Attrition)) + geom_bar(position = "fill") +
+  ylab("proportion")
+```
+Grafik ini menampilkan proporsi karyawan yang terjadi atrisi dan tidak terjadi atrisi berdasarkan jenis business travel.
+Dapat dilihat bahwa proporsi karyawan yang terjadi atrisi cenderung lebih tinggi pada karyawan yang melakukan travel secara frequently dibandingkan dengan yang tidak.
+
+## Proportion of Attrition by Education Level
+```{r}
+ggplot(hr, aes(x=Education, fill = Attrition)) + geom_bar(position = "fill") 
+```
+Grafik ini menampilkan proporsi karyawan yang terjadi atrisi dan tidak terjadi atrisi berdasarkan tingkat pendidikan.
+Dapat dilihat bahwa proporsi karyawan yang terjadi atrisi cenderung lebih tinggi pada karyawan dengan tingkat pendidikan yang lebih rendah.
+
+## Grafik Density Plot Jarak Tempat Tinggal ke Kantor Berdasarkan Atrisi 
+```{r}
+ggplot(hr, aes(x=DistanceFromHome, fill = Attrition)) + geom_density(alpha=0.3)
+```
+
+Kode tersebut akan membuat sebuah visualisasi grafik menggunakan package ggplot2 pada dataset HR. Grafik ini akan menampilkan distribusi kepadatan (density) karyawan berdasarkan jarak dari rumah ke tempat kerja (DistanceFromHome), dan diisi dengan warna yang berbeda untuk karyawan yang keluar dari perusahaan (Attrition = Yes) dan karyawan yang tidak keluar (Attrition = No).
+
+Grafik ini terdiri dari dua kurva kepadatan yang tumpang tindih. Kurva pertama (biru) mewakili karyawan yang tidak keluar, sedangkan kurva kedua (merah) mewakili karyawan yang keluar. Pada bagian tengah grafik, terdapat puncak (peak) yang mengindikasikan sebagian besar karyawan berada pada jarak tertentu dari rumah ke tempat kerja. Namun, terdapat perbedaan pada kedua kelompok karyawan. Kelompok karyawan yang keluar dari perusahaan (Attrition = Yes) memiliki puncak kurva kepadatan yang lebih rendah dan terletak lebih dekat dengan jarak nol (rumah dan tempat kerja berdekatan). Sedangkan kelompok karyawan yang tidak keluar (Attrition = No) memiliki puncak kurva kepadatan yang lebih tinggi dan terletak sedikit lebih jauh dari jarak nol. Hal ini mungkin mengindikasikan bahwa karyawan yang tinggal dekat dengan tempat kerja cenderung lebih untuk keluar dari perusahaan.
+
+
+
+```{r}
+
+options(scipen=999)          
+D <- hr %>%
+  group_by(Attrition) %>%
+  summarise(mean(DistanceFromHome))
+D
+```
+Kode tersebut digunakan untuk menghitung rata-rata jarak dari rumah karyawan ke tempat kerja berdasarkan status attrition (keluar atau tidak keluar dari perusahaan). Pada kode pertama, options(scipen=999) digunakan untuk menonaktifkan notasi ilmiah pada output. Kemudian, kode group_by(Attrition) digunakan untuk mengelompokkan data berdasarkan kolom Attrition. Kode summarise(mean(DistanceFromHome)) berfungsi untuk menghitung rata-rata jarak dari rumah karyawan ke tempat kerja pada setiap kelompok Attrition. Output yang dihasilkan adalah dataframe yang menunjukkan rata-rata jarak dari rumah ke tempat kerja karyawan yang keluar dan tidak keluar dari perusahaan.
+
+
+
+
+## Grafik Bar Plot Bidang Pendidikan Berdasarkan Atrisi
+```{r}
+ggplot(hr, aes(x=EducationField, fill = Attrition)) + geom_bar(position = "fill") + 
+ylab("proportion") 
+```
+Grafik ini menampilkan proporsi karyawan yang terjadi atrisi dan tidak terjadi atrisi berdasarkan bidang pendidikan.
+Dapat dilihat bahwa proporsi karyawan yang terjadi atrisi cenderung lebih tinggi pada karyawan dengan bidang pendidikan Technical Degree, Human Resource, dan Marketing dibandingkan dengan bidang pendidikan lainnya.
+
+
+
+## Grafik Density Plot Daily Rate Berdasarkan Atrisi
+```{r}
+ggplot(hr, aes(x= DailyRate, fill= Attrition)) + geom_density(alpha = 0.3) 
+```
+Kode di atas memvisualisasikan plot kepadatan (density plot) untuk fitur DailyRate dalam dataset HR, dengan membaginya berdasarkan kolom Attrition.
+
+Plot kepadatan menunjukkan sebaran data secara kontinu dalam bentuk kurva. Pada plot kepadatan, semakin tinggi puncak kurva, semakin tinggi frekuensi data. Pada kode di atas, kurva biru mewakili karyawan yang tidak keluar dari perusahaan (Attrition = "No"), sedangkan kurva merah mewakili karyawan yang keluar dari perusahaan (Attrition = "Yes").
+
+Dari plot tersebut dapat dilihat bahwa kedua kelompok karyawan memiliki sebaran DailyRate yang relatif mirip, dengan puncak kurva pada sekitar 1000. Namun, kelompok karyawan yang keluar dari perusahaan (kurva merah) memiliki ekor kanan yang lebih panjang, yang berarti ada lebih banyak karyawan yang memiliki DailyRate yang tinggi dan keluar dari perusahaan.
+
+ Hal ini dapat menjadi indikasi bahwa karyawan yang memiliki gaji lebih tinggi mungkin merasa tidak puas dengan pekerjaannya atau mencari kesempatan yang lebih baik di tempat lain sehingga mereka memutuskan untuk meninggalkan perusahaan
+
+
+
+
+```{r}
+options(scipen=999)          
+B <- hr %>%
+  group_by(Attrition) %>%
+  summarise(mean(DailyRate))
+B
+```
+melakukan pengaturan opsi agar angka yang ditampilkan tidak menggunakan notasi ilmiah dengan menetapkan nilai scipen menjadi 999. Selanjutnya, dilakukan pengelompokan data berdasarkan variabel Attrition dan dilakukan ringkasan atau summary dengan menghitung rata-rata DailyRate untuk setiap kelompok. Hasilnya disimpan ke dalam objek B.
+
+Dari hasil output kode tersebut, dapat dilihat bahwa rata-rata DailyRate dari karyawan yang keluar (Attrition = Yes) adalah sebesar 750.36 sedangkan rata-rata DailyRate dari karyawan yang tetap (Attrition = No) adalah sebesar 812.50. Dari perbandingan kedua nilai tersebut, dapat diasumsikan bahwa karyawan yang keluar memiliki rata-rata DailyRate yang lebih rendah dibandingkan dengan karyawan yang tetap.
+
+
+
+## Breakdown of dailyrate by department
+```{r}
+ggplot(hr, aes(x= DailyRate, fill= Department)) + geom_density(alpha = 0.3)  
+```
+Kode tersebut melakukan visualisasi plot kepadatan (density plot) variabel DailyRate terhadap departemen di mana karyawan bekerja. Plot kepadatan menggambarkan distribusi data dalam bentuk kurva, di mana area di bawah kurva merepresentasikan proporsi data pada rentang nilai tertentu. Pada plot ini, sumbu x menunjukkan rentang nilai DailyRate, sedangkan sumbu y menunjukkan proporsi data pada rentang nilai tersebut.
+
+Setiap kurva yang dihasilkan merepresentasikan distribusi kepadatan DailyRate untuk setiap departemen, diwakili oleh warna yang berbeda pada plot. Karena setiap departemen memiliki distribusi kepadatan yang berbeda, kurva-kurva tersebut memiliki pola yang unik dan tidak selalu simetris.
+
+Visualisasi ini dapat memberikan informasi yang berguna tentang perbedaan distribusi kepadatan DailyRate antara departemen di perusahaan tersebut. Misalnya, kita dapat melihat bahwa distribusi kepadatan DailyRate untuk departemen Research & Development (R&D) dan Sales cenderung lebih miring ke kanan (skewed right) dibandingkan dengan distribusi kepadatan untuk departemen Human Resources (HR). Ini dapat menunjukkan bahwa gaji untuk karyawan di departemen R&D dan Sales cenderung lebih tinggi daripada gaji untuk karyawan di departemen HR.
+
+
+
+```{r}
+options(scipen=999)          
+A <- hr %>%
+  group_by(Department) %>%
+  summarise(mean(DailyRate), min(DailyRate), max(DailyRate))
+A
+```
+
+ringkasan statistik dari kolom DailyRate 
+
+kemudian menghitung nilai rata-rata, nilai minimum, dan nilai maksimum dari kolom DailyRate untuk setiap departemen menggunakan fungsi summarise dari paket dplyr.
+
+Hasil outputnya adalah sebuah tabel (data.frame) dengan tiga kolom: Department, mean(DailyRate), dan min(DailyRate), serta max(DailyRate).
+
+Dalam kolom Department, terdapat daftar nama departemen yang ada pada data karyawan. Di kolom mean(DailyRate), terdapat nilai rata-rata dari kolom DailyRate untuk setiap departemen. Di kolom min(DailyRate), terdapat nilai terkecil dari kolom DailyRate untuk setiap departemen. Di kolom max(DailyRate), terdapat nilai terbesar dari kolom DailyRate untuk setiap departemen.
+
+Hal ini memberikan informasi tentang seberapa besar perbedaan gaji antar departemen dalam perusahaan. Selain itu, hasil ini dapat menjadi dasar untuk mengambil keputusan dalam pengelolaan sumber daya manusia seperti dalam penentuan standar gaji pada tiap departemen dan kebijakan insentif atau kenaikan gaji pada karyawan.
+
+
+
+
+## Breakdown of dailyrate by Education field
+```{r}
+options(scipen=999)          
+C <- hr %>%
+  group_by(EducationField) %>%
+  summarise(mean(DailyRate), min(DailyRate), max(DailyRate))
+C
+```
+analisis ringkasan dari data karyawan (hr) yang dikelompokkan berdasarkan bidang pendidikan (EducationField) mereka, termasuk rata-rata, nilai minimum, dan nilai maksimum dari tingkat penghasilan harian (DailyRate) mereka. Variabel "options(scipen=999)" mengatur output agar tidak menggunakan notasi ilmiah (scientific notation) untuk angka yang sangat besar atau kecil.
+
+Pertama, kode menggunakan fungsi %>% untuk mengalihkan objek data dari fungsi sebelumnya ke fungsi selanjutnya, sehingga kode selanjutnya dijalankan pada hasil objek sebelumnya.
+
+Selanjutnya, kode mengelompokkan data karyawan berdasarkan bidang pendidikan mereka dengan menggunakan fungsi group_by().
+
+Kemudian, fungsi summarise() digunakan untuk menghitung statistik ringkasan dari tingkat penghasilan harian (DailyRate) untuk setiap bidang pendidikan. Statistik ini meliputi rata-rata, nilai minimum, dan nilai maksimum yang disimpan dalam variabel C.
+
+Dengan menggunakan analisis ini, perusahaan dapat membandingkan tingkat penghasilan harian antara berbagai bidang pendidikan untuk mengetahui apakah terdapat perbedaan dalam gaji yang diberikan untuk setiap bidang pendidikan.
+
+
+
+### Proportion of Attrition by TRainingTineLastYear
+```{r}
+
+ggplot(hr_data, aes(x=TrainingTimesLastYear, fill = Attrition)) + 
+  geom_bar(position = "fill") + ylab("proportion")
+
+```
+
+Visualisasi pada kode tersebut menggunakan bar chart untuk menampilkan proporsi karyawan yang mengalami Attrition (pergi dari perusahaan) dan tidak berdasarkan Training Times Last Year (jumlah pelatihan yang diikuti dalam setahun). Setiap bar pada chart menunjukkan proporsi karyawan yang mengalami atau tidak mengalami Attrition berdasarkan kategori jumlah pelatihan yang diikuti dalam setahun.
+
+Warna yang berbeda pada setiap bar chart menunjukkan kategori Attrition, yaitu biru untuk karyawan yang mengalami Attrition dan merah untuk karyawan yang tidak mengalami Attrition. Proporsi ditampilkan dalam skala 0 hingga 1 di sumbu y. Jadi, jika setiap bar chart memiliki tinggi 1, maka semua karyawan dalam kategori tersebut mengalami Attrition, sedangkan jika tinggi 0, maka tidak ada karyawan yang mengalami Attrition dalam kategori tersebut.
+
+Dari visualisasi ini dapat dilihat bahwa karyawan yang tidak mengikuti(0), 2 dan 4 kali pelatihan dalam setahun memiliki proporsi yang lebih tinggi dalam kategori Attrition dibandingkan dengan karyawan yang mengikuti pelatihan lainnya. Sedangkan karyawan yang mengikuti pelatihan 6 kali memiliki proporsi paling rendah dalam kategori Attrition. Oleh karena itu, perusahaan perlu memperhatikan pelatihan yang diberikan dan efektivitas pelatihan tersebut untuk mengurangi risiko Attrition.
+
+## Proportion of Attrition by WorkLifeBalance
+```{r}
+ggplot(hr_data, aes(x=WorkLifeBalance, fill = Attrition)) +
+  geom_bar(position = "fill") +
+  ylab("proportion")
+```
+
+Visualisasi ini menggunakan ggplot untuk membandingkan Work Life Balance dengan Attrition dalam bentuk histogram.
+
+Variabel x pada grafik ini adalah Work Life Balance, sedangkan variabel fillnya adalah Attrition. Setiap batang histogram menunjukkan proporsi karyawan yang mengalami attrition atau keluar dari perusahaan pada tingkat work life balance tertentu. Proporsi karyawan dihitung sebagai persentase dari total karyawan dalam kategori tersebut.
+
+Parameter position = "fill" memungkinkan grafik menampilkan proporsi daripada frekuensi pada sumbu y. Selain itu, dengan menambahkan ylab("proportion"), label sumbu y berubah menjadi "proporsi" untuk menjelaskan bahwa grafik menunjukkan proporsi karyawan yang mengalami attrition di setiap tingkat work life balance.
+
+Dari visualisasi ini, dapat dilihat bahwa proporsi karyawan yang mengalami attrition lebih tinggi pada tingkat work life balance yang rendah. Proporsi tertinggi terlihat pada karyawan dengan work life balance 1 (sangat buruk) dan proporsi terendah terlihat pada karyawan dengan work life balance 3 (baik). Hal ini menunjukkan pentingnya work life balance dalam mempertahankan karyawan dan mencegah attrition.
+
+
+
+
+
+## Count of Attrition by TotalWorkingYears
+```{r}
+plot_1 = ggplot(hr_data, aes(TotalWorkingYears,fill = factor(Attrition)))
+plot_2 = plot_1 + geom_histogram(stat="count")
+
+```
+
+Pada baris pertama, kita menginisialisasi objek plot_1 yang akan menampilkan grafik menggunakan fungsi ggplot(). Kita memberikan data yang akan digunakan yaitu hr_data, dan mengatur variabel TotalWorkingYears sebagai sumbu x, serta faktor Attrition sebagai fill untuk membedakan warna antara karyawan yang masih bertahan dengan yang mengundurkan diri.
+
+Kemudian pada baris kedua, kita menambahkan objek plot_2 dengan menggunakan operator + dan menambahkan geometri histogram dengan menggunakan fungsi geom_histogram(). Pada parameter stat, kita menggunakan "count" karena kita ingin melihat jumlah karyawan pada setiap range TotalWorkingYears.
+
+
+
+```{r}
+print(plot_2)
+```
+Kode print(plot_2) digunakan untuk menampilkan histogram yang telah dibuat menggunakan ggplot2. Output yang dihasilkan adalah histogram yang menampilkan jumlah karyawan (sumbu y) dengan total tahun kerja (sumbu x) mereka. Histogram ini dibagi menjadi dua warna yaitu biru dan oranye, yang merepresentasikan karyawan yang keluar (Attrition = yes) dan karyawan yang tidak keluar (Attrition = no) dari perusahaan, sesuai dengan kode sebelumnya yang membagi data berdasarkan faktor "Attrition".
+
+Histogram ini memberikan gambaran tentang distribusi TotalWorkingYears di antara karyawan, dengan melihat frekuensi dari jumlah tahun kerja mereka. Histogram ini juga dapat membantu melihat apakah ada perbedaan yang signifikan antara karyawan yang keluar dan yang tidak keluar dari perusahaan berdasarkan TotalWorkingYears mereka. Namun, perlu diingat bahwa histogram ini hanya memberikan gambaran kasar tentang distribusi data dan tidak memberikan informasi tentang nilai rata-rata atau standar deviasi. 
+
+Dari visualisasi histogram TotalWorkingYears untuk kedua kelompok Attrition (ya dan tidak), terlihat bahwa distribusi TotalWorkingYears memiliki bentuk skew-right atau miring ke kanan, yang berarti mayoritas karyawan memiliki TotalWorkingYears yang rendah. Karyawan yang tidak mengalami Attrition (kelompok 'No') cenderung memiliki TotalWorkingYears yang lebih lama daripada karyawan yang mengalami Attrition (kelompok 'Yes').
+
+Terlihat bahwa ada banyak karyawan yang mengalami Attrition yang memiliki TotalWorkingYears di bawah 10 tahun, sedangkan untuk karyawan yang tidak mengalami Attrition distribusinya lebih merata dan mayoritas memiliki TotalWorkingYears di atas 10 tahun.
+
+Dari visualisasi ini dapat disimpulkan bahwa TotalWorkingYears adalah faktor penting dalam menentukan apakah seorang karyawan akan mengalami Attrition atau tidak. Semakin lama seorang karyawan bekerja, semakin rendah kemungkinan dia mengalami Attrition. Oleh karena itu, perusahaan dapat mempertimbangkan untuk memberikan insentif atau kesempatan pengembangan karir bagi karyawan yang telah bekerja lama guna meningkatkan retensi karyawan dan mengurangi tingkat Attrition.
+
+
+
+## Plot of Employees by YearsAtCompany
+```{r}
+ggplot(hr_data) + 
+  geom_histogram(mapping=(aes(YearsAtCompany)),fill="red",col="white",binwidth = 1) + 
+  labs(x="Years at the company", y="Employees", title="Working Years at Company") + theme(legend.position="none")
+```
+
+Kode tersebut menghasilkan histogram untuk menunjukkan distribusi jumlah karyawan (sumbu y) berdasarkan jumlah tahun yang mereka habiskan di perusahaan (sumbu x). Histogram menggunakan interval binning yang setiap binnnya mewakili durasi satu tahun dengan menggunakan parameter binwidth=1.
+
+Warna isi histogram diatur sebagai "merah" menggunakan parameter fill="red", sedangkan warna garis batas histogram diatur sebagai "putih" menggunakan parameter col="white".
+
+Label sumbu x diatur sebagai "Years at the company" menggunakan parameter x="Years at the company", sedangkan label sumbu y diatur sebagai "Employees" menggunakan parameter y="Employees". Judul plot diatur sebagai "Working Years at Company" menggunakan parameter title="Working Years at Company".
+
+Selain itu, theme(legend.position="none") digunakan untuk menghilangkan legenda pada plot.
+
+Hasil visualisasi menunjukkan bahwa mayoritas karyawan memiliki pengalaman kerja antara 0 hingga 10 tahun di perusahaan, yang diwakili oleh puncak tertinggi di grafik tersebut. Selain itu, distribusi pengalaman kerja di perusahaan cenderung menurun ketika jumlah tahun meningkat, dengan jumlah karyawan yang lebih sedikit yang bekerja di perusahaan selama lebih dari 10 tahun. Hal ini menunjukkan bahwa perusahaan mungkin mengalami masalah retensi karyawan dalam jangka panjang.
+
+
+
+## Plot of Employees Count by CurrentRole
+```{r}
+ggplot(hr_data) + 
+  geom_histogram(mapping=(aes(YearsInCurrentRole)),fill="red",col="white",binwidth = 1) + 
+  labs(x="Years in Current Role", y="Employees", title="Years in Current Role") + theme(legend.position="none")
+```
+Kode tersebut menggunakan geom_histogram untuk membuat histogram dengan sumbu x menunjukkan jumlah tahun yang dihabiskan oleh karyawan dalam peran saat ini (YearsInCurrentRole) dan sumbu y menunjukkan jumlah karyawan yang memiliki tahun tersebut dalam peran saat ini. Histogram memiliki lebar bin 1, sehingga setiap bilangan bulat yang mewakili jumlah tahun muncul dalam sumbu x.
+
+Warna pengisian histogram diatur menjadi merah dan warna tepi histogram diatur menjadi putih dengan argumen fill dan col. Selain itu, kode juga menambahkan judul "Years in Current Role" untuk plot dan menghilangkan legenda dengan argumen theme.
+
+Histogram menunjukkan bahwa mayoritas karyawan berada pada posisi saat ini selama kurang dari 5 tahun, dengan puncak terbesar berada pada interval 1-2 tahun. Sedangkan jumlah karyawan yang tinggal dalam posisi saat ini selama lebih dari 9 tahun jauh lebih sedikit. Hal ini dapat menunjukkan bahwa perputaran karyawan di posisi saat ini cukup tinggi dan perusahaan mungkin perlu melakukan peninjauan ulang mengenai kebijakan pengembangan karir dan kepuasan karyawan.
+
+
+
+
+
+
+## #Data Preprocessing:
+1.We drop the obvious needless columns here: Employee Count, Over 18, Employee Number (all the same), StandardHours (all the same)
+```{r}
+hr.df <- hr.df[, -c(9,10,22,27)]
+```
+Kode tersebut menghapus kolom ke-9, 10, 22, dan 27 dari dataset hr.df. Tanda "-" di depan c(9,10,22,27) menandakan bahwa kolom-kolom tersebut akan dihapus.
+
+Hal ini dapat bermanfaat untuk menghilangkan kolom-kolom yang tidak diperlukan atau tidak relevan dalam analisis data, sehingga dapat mempermudah pemrosesan data dan mempercepat waktu komputasi. Namun, perlu diperhatikan bahwa penghapusan kolom yang tidak sesuai dapat mempengaruhi hasil analisis dan kesimpulan yang diambil dari dataset.
+
+
+
+2.treat the below variables as categorical
+```{r}
+hr.df$Education <- factor(hr.df$Education, 
+                          levels = c(1,2,3,4,5),
+                          labels = c('Below College','College','Bachelor','Master','Doctor'))
+
+hr.df$EnvironmentSatisfaction <- factor(hr.df$EnvironmentSatisfaction,
+                                        levels = c(1,2,3,4),
+                                        labels = c('Low','Medium','High','Very High'))
+
+hr.df$JobInvolvement <- factor(hr.df$JobInvolvement,
+                               levels = c(1,2,3,4),
+                               labels = c('Low','Medium','High','Very High'))
+
+hr.df$JobLevel <- factor(hr.df$JobLevel,
+                         levels = c(1,2,3,4,5),
+                         labels = c('Very Low','Low','Medium','High','Very High'))
+
+hr.df$JobSatisfaction <- factor(hr.df$JobSatisfaction,
+                                levels = c(1,2,3,4),
+                                labels = c('Low','Medium','High','Very High'))
+
+hr.df$PerformanceRating <- factor(hr.df$PerformanceRating,
+                                  levels = c(1,2,3,4),
+                                  labels = c('Low','Good','Excellent','Outstanding'))
+
+hr.df$RelationshipSatisfaction <- factor(hr.df$RelationshipSatisfaction,
+                                         levels = c(1,2,3,4),
+                                         labels = c('Low','Medium','High','Very High'))
+
+hr.df$WorkLifeBalance <- factor(hr.df$WorkLifeBalance,
+                                levels = c(1,2,3,4),
+                                labels = c('Bad','Good','Better','Best'))
+
+hr.df$StockOptionLevel <- factor(hr.df$StockOptionLevel,
+                                 levels = c(0,1,2,3),
+                                 labels = c('Low','Medium','High','Very High'))
+
+```
+
+melakukan konversi beberapa variabel kategorikal dalam dataset HR ke dalam faktor, dengan menggunakan fungsi factor() pada R. Faktor adalah tipe data pada R yang merepresentasikan variabel kategorikal dan digunakan untuk analisis statistik dan visualisasi.
+
+Pertama, kode mengubah variabel Education menjadi faktor dan menetapkan urutan level untuk faktor tersebut menggunakan argumen levels dan labels. levels menentukan urutan level dalam faktor dan labels digunakan untuk memberikan label untuk setiap level dalam faktor. Dalam hal ini, level 1 diubah menjadi 'Below College', level 2 diubah menjadi 'College', level 3 diubah menjadi 'Bachelor', level 4 diubah menjadi 'Master', dan level 5 diubah menjadi 'Doctor'.
+
+Seterusnya, kode mengubah beberapa variabel kategorikal lainnya seperti EnvironmentSatisfaction, JobInvolvement, JobLevel, JobSatisfaction, PerformanceRating, RelationshipSatisfaction, WorkLifeBalance, dan StockOptionLevel menjadi faktor dan menetapkan urutan level dan label yang sesuai.
+
+Setelah dilakukan konversi, variabel-variabel tersebut dapat digunakan untuk analisis statistik seperti ANOVA, regresi, dan pengujian hipotesis. Selain itu, dengan menggunakan fungsi ggplot2 pada R, faktor-faktor ini dapat divisualisasikan dengan lebih baik dalam bentuk grafik.
+
+
+
+3.partition data into training and validation dataset: 60% of training, 40% of validation
+```{r}
+library(caret)
+training.index <- createDataPartition(hr.df$Attrition, p = 0.60, list = FALSE)
+
+hr.train.df <- hr.df[training.index, ]
+hr.valid.df <- hr.df[-training.index, ]
+```
+
+Kode tersebut menggunakan package caret untuk membagi data menjadi data training dan data validasi.
+
+Pertama, menggunakan fungsi createDataPartition untuk membuat indeks data training dengan proporsi 60% dari seluruh data. Argumen pertama pada fungsi ini adalah vektor target, yaitu hr.df$Attrition, yang berisi kategori "Yes" atau "No" pada kolom "Attrition" yang merupakan target klasifikasi. Argumen kedua adalah p, yang menunjukkan proporsi data training. Argumen ketiga list=FALSE menandakan bahwa outputnya berupa indeks.
+
+Kemudian, menggunakan indeks tersebut untuk membagi data menjadi dua bagian: hr.train.df yang berisi 60% data training dan hr.valid.df yang berisi 40% data validasi. hr.train.df dan hr.valid.df kemudian dapat digunakan untuk membangun model klasifikasi dan menguji performanya.
+
+
+
+4.normalize the data for numeric variables, since they are not using the same metrics (e.g. years vs dollars)
+```{r}
+hr.norm <- preProcess(hr.train.df, method = c("center", "scale"))
+
+hr.train.norm <- predict(hr.norm, hr.train.df)
+hr.valid.norm <- predict(hr.norm, hr.valid.df)
+```
+
+Pada kode di atas, dilakukan normalisasi data menggunakan fungsi preProcess() dari package caret. Fungsi preProcess() dengan method parameter yang diset sebagai "center" dan "scale" akan memusatkan dan menstandardisasi data numerik.
+
+Setelah data dinormalisasi, dilakukan prediksi menggunakan predict() pada data training dan data validasi dengan menggunakan normalisasi yang sama. Data yang sudah dinormalisasi tersebut disimpan pada hr.train.norm dan hr.valid.norm.
+
+Dalam machine learning, normalisasi data sangat penting untuk menghasilkan model yang lebih akurat dan stabil. Dengan normalisasi, skala data akan seragam sehingga variabel yang memiliki skala besar tidak akan mempengaruhi hasil prediksi lebih besar dibandingkan dengan variabel yang memiliki skala yang lebih kecil. Hal ini akan menghasilkan prediksi yang lebih konsisten dan lebih akurat.
+
+
+
+
+
+Now we use the normalized data to run logistic regression
+```{r}
+lm.fit <- glm(Attrition~., family = "binomial"(link="logit"), data = hr.train.norm)
+```
+Kode lm.fit <- glm(Attrition~., family = "binomial"(link="logit"), data = hr.train.norm) digunakan untuk membuat model regresi logistik pada data training setelah dilakukan normalisasi.
+
+glm() adalah fungsi yang digunakan untuk membuat model regresi linear umum, termasuk regresi logistik.
+
+Attrition~. menunjukkan bahwa variabel target Attrition akan diprediksi berdasarkan semua variabel lain yang ada di dataset hr.train.norm.
+
+Tanda ~. dalam formula Attrition~. digunakan untuk menunjukkan bahwa semua variabel dalam dataset digunakan sebagai prediktor.
+
+family = "binomial"(link="logit") menunjukkan bahwa regresi logistik digunakan untuk memodelkan probabilitas untuk kategori biner (Attrition Yes atau No), dan fungsi logit digunakan untuk menghubungkan variabel dependen (Attrition) dengan prediktor.
+
+data = hr.train.norm digunakan untuk menunjukkan bahwa model dibuat pada dataset hr.train.norm, yang sudah dinormalisasi sebelumnya.
+
+Hasil dari kode ini adalah sebuah objek model regresi logistik lm.fit yang dapat digunakan untuk memprediksi nilai Attrition berdasarkan nilai-nilai variabel prediktor pada data training yang telah dinormalisasi.
+
+
+
+
+
+
+show coefficients and odds:
+```{r}
+lm.summary <- data.frame(summary(lm.fit)$coefficients, odds = exp(coef(lm.fit)))
+options(scipen = 999)
+round(lm.summary, 5)
+```
+Kode di atas menghasilkan sebuah tabel yang berisi ringkasan hasil analisis regresi logistik binomial yang dilakukan pada data HR Analytics. Tabel tersebut berisi koefisien, standar error, nilai z, nilai p, dan odds ratio untuk setiap variabel yang termasuk dalam model.
+
+Variabel target adalah Attrition, sedangkan variabel input lainnya adalah variabel numerik seperti Age, DailyRate, MonthlyIncome, DistanceFromHome, PercentSalaryHike, TotalWorkingYears, YearsAtCompany, YearsInCurrentRole, YearsSinceLastPromotion, dan YearsWithCurrManager. Selain itu, terdapat juga variabel kategorik seperti BusinessTravel, Department, Education, EducationField, EnvironmentSatisfaction, Gender, JobInvolvement, JobLevel, JobRole, JobSatisfaction, MaritalStatus, NumCompaniesWorked, Over18, OverTime, PerformanceRating, RelationshipSatisfaction, StockOptionLevel, dan WorkLifeBalance.
+
+Untuk setiap variabel, tabel tersebut memberikan koefisien yang menunjukkan seberapa besar pengaruh variabel tersebut terhadap probabilitas terjadinya Attrition. Koefisien positif menunjukkan bahwa semakin besar nilai variabel tersebut, semakin besar pula probabilitas Attrition. Sebaliknya, koefisien negatif menunjukkan bahwa semakin kecil nilai variabel tersebut, semakin besar pula probabilitas Attrition.
+
+Standar error menunjukkan seberapa akurat koefisien yang diperoleh. Nilai yang semakin kecil menunjukkan bahwa koefisien tersebut semakin akurat. Nilai z menunjukkan seberapa signifikan pengaruh variabel terhadap Attrition. Nilai p menunjukkan probabilitas bahwa koefisien tersebut tidak signifikan secara statistik, dan semakin kecil nilai p, semakin signifikan pengaruh variabel tersebut terhadap Attrition.
+
+Odds ratio menunjukkan seberapa besar pengaruh variabel tersebut terhadap odds dari Attrition. Odds ratio yang lebih dari 1 menunjukkan bahwa semakin besar nilai variabel tersebut, semakin besar pula odds dari Attrition. Sebaliknya, odds ratio yang kurang dari 1 menunjukkan bahwa semakin kecil nilai variabel tersebut, semakin besar pula odds dari Attrition.
+
+
+Dalam contoh ini, kami menggunakan model regresi logistik untuk memprediksi kemungkinan seorang karyawan keluar dari perusahaan (Attrition). Outputnya adalah tabel koefisien yang mencantumkan nama variabel, koefisien regresi, standar error, statistik t dan p-value. Kolom odds menunjukkan peluang rasio, yang merupakan perbandingan antara kemungkinan kejadian terhadap kemungkinan ketidak-terjadiannya, dan menghitung eksp dari koefisien untuk memperoleh peluang rasio.
+
+Misalnya, untuk variabel "MonthlyIncome", koefisien regresinya -0.14846. Ini berarti bahwa ketika semua faktor lain tetap konstan, peningkatan gaji bulanan sebesar 1 unit (dalam ribuan dolar) berhubungan dengan pengurangan log odds attrisi sebesar 0.14846. Hal ini dapat diinterpretasikan bahwa semakin tinggi gaji bulanan seseorang, semakin kecil kemungkinan orang tersebut akan keluar dari perusahaan.
+
+Beberapa variabel lain juga memiliki pengaruh yang signifikan dalam memprediksi attrisi, seperti "OverTime_Yes", "JobLevel_Medium", "JobLevel_High", "MaritalStatus_Single", dan "BusinessTravel_Travel_Frequently". Pada sisi lain, variabel seperti "Gender_Female", "JobRole_Human_Resources", dan "JobRole_Laboratory_Technician" tidak signifikan dalam memprediksi attrisi.
+
+Dalam keseluruhan, output ini memberikan gambaran tentang variabel mana yang paling mempengaruhi attrisi, dan dapat membantu perusahaan dalam mengambil tindakan untuk mengurangi tingkat attrisi.
+
+
+
+
+
+
+```{r}
+pred <- predict(lm.fit, hr.valid.norm, type = 'response')
+confusionMatrix(as.factor(ifelse(pred > 0.5, "Yes", "No")), 
+                as.factor(hr.valid.norm$Attrition))
+```
+
+Kode di atas digunakan untuk memprediksi data HR validasi yang telah dinormalisasi menggunakan model regresi logistik yang telah dilatih sebelumnya.
+
+Hasil output pertama menunjukkan hasil prediksi dari model, di mana variabel pred berisi probabilitas prediksi Attrition pada data validasi. Kemudian, menggunakan fungsi ifelse(), probabilitas tersebut dikonversi menjadi label biner 'Yes' atau 'No' dengan mengatur nilai ambang 0,5.
+
+Selanjutnya, fungsi confusionMatrix() digunakan untuk membandingkan hasil prediksi dengan data validasi yang sebenarnya, yang ditunjukkan oleh kolom "Reference" dan "Prediction" pada tabel hasil output kedua. Tabel ini menunjukkan bahwa model mengklasifikasikan 427 karyawan dengan benar sebagai yang akan tetap bekerja (True Negative) dan 27 karyawan dengan benar sebagai yang akan keluar (True Positive), namun juga mengklasifikasikan 37 karyawan yang sebenarnya akan tetap bekerja sebagai yang akan keluar (False Positive) dan 29 karyawan yang sebenarnya akan keluar sebagai yang akan tetap bekerja (False Negative).
+
+Dari tabel hasil output tersebut, kita juga dapat melihat beberapa metrik evaluasi kinerja model, seperti akurasi (Accuracy), presisi (Precision), recall (Recall), F1-score, dan lain-lain, yang dihitung berdasarkan kombinasi nilai True/False Positive/Negative. Metrik evaluasi ini sangat penting untuk mengevaluasi kinerja model dan membantu pengambilan keputusan terkait implementasi model dalam praktek.
+
+
+
+
+## Plotting lift/decile chart:
+```{r}
+library(gains)
+hr.valid.norm$isAttrition <- 1 * (hr.valid.norm$Attrition == "Yes")
+gain <- gains(hr.valid.norm$isAttrition, pred)
+
+### Plot Lift Chart
+plot(c(0,gain$cume.pct.of.total*sum(hr.valid.norm$isAttrition))~c(0,gain$cume.obs), 
+     xlab = "# cases", ylab = "Cumulative", main = "", type = "l")
+lines(c(0,sum(hr.valid.norm$isAttrition))~c(0, dim(hr.valid.norm)[1]), lty = 5)
+```
+Setelah melakukan prediksi dengan model yang sudah dibuat pada data validasi, dilakukan evaluasi menggunakan confusion matrix. Confusion matrix menunjukkan jumlah prediksi yang benar dan salah yang dibandingkan dengan data aktual. Dalam kode ini, confusion matrix dihasilkan dengan menggunakan fungsi confusionMatrix dari paket caret.
+
+Selanjutnya, untuk mengevaluasi performa model secara lebih rinci, dilakukan plotting menggunakan paket gains. Plotting ini menunjukkan seberapa baik model dapat mengidentifikasi target variabel (dalam kasus ini adalah Attrition). Plotting gains chart adalah salah satu metode untuk mengevaluasi model prediksi pada kasus di mana variabel target tidak seimbang (imbalanced). Plotting ini mengukur akurasi relatif terhadap kemunculan aktual dari target variabel.
+
+Pada kode tersebut, variabel Attrition pada data validasi diubah menjadi binary (0 atau 1) dengan fungsi hr.valid.norm$isAttrition <- 1 * (hr.valid.norm$Attrition == "Yes"). Kemudian, dilakukan perhitungan gains dengan memasukkan variabel binary ini dan hasil prediksi model menggunakan fungsi gains(hr.valid.norm$isAttrition, pred). Plotting dilakukan dengan menggambar kumulatif dari persentase target yang benar diidentifikasi (y-axis) terhadap kumulatif dari persentase total pengamatan yang dipertimbangkan (x-axis) menggunakan fungsi plot(). Kurva ini ditunjukkan dengan garis yang berwarna biru pada grafik di atas.
+
+Pada dasarnya, model yang baik akan memperlihatkan kurva gains yang lebih tinggi dan lebih cepat naik. Kurva gains dapat membantu dalam menentukan threshold atau titik ambang yang sesuai untuk memutuskan apakah pengamatan perlu diklasifikasikan sebagai kelas target atau tidak.
+
+Terakhir, kita memvisualisasikan grafik Lift Chart (grafik yang menunjukkan kenaikan keuntungan dengan menggunakan model) menggunakan fungsi "plot". Pada grafik tersebut, sumbu x menunjukkan jumlah kasus yang diperiksa secara berurutan, sedangkan sumbu y menunjukkan jumlah karyawan yang meninggalkan pekerjaan hingga titik tersebut. Garis putus-putus menunjukkan jumlah karyawan yang akan meninggalkan pekerjaan tanpa menggunakan model (baseline), sedangkan garis solid menunjukkan jumlah karyawan yang akan meninggalkan pekerjaan saat menggunakan model. Semakin curam garis solid, semakin baik model kita dalam memprediksi karyawan yang akan meninggalkan pekerjaan.
+
+Secara keseluruhan, visualisasi ini memungkinkan kita untuk melihat seberapa baik model kita dalam memprediksi kasus attrition. Semakin dekat garis solid ke garis putus-putus, semakin rendah kinerja model prediksi. Dan semakin besar area yang di bawah garis solid dibandingkan garis putus-putus, semakin baik kinerja model prediksi.
+
+
+
+
+```{r}
+### Plot decile-wise chart
+heights <- gain$mean.resp/mean(hr.valid.norm$isAttrition)
+midpoints <- barplot(heights, names.arg = gain$depth,  ylim = c(0,9), col = "gold3",  
+                     xlab = "Percentile", ylab = "Mean Attrition", 
+                     main = "Decile-wise lift chart")
+```
+
+Kode tersebut membuat sebuah chart yang disebut "Decile-wise Lift Chart" untuk mengevaluasi performa dari model prediksi Attrition yang telah dibuat sebelumnya. Lift Chart merupakan sebuah metrik evaluasi model yang menunjukkan kenaikan atau penurunan kemampuan model dibanding dengan model baseline.
+
+Pada visualisasi tersebut, terdapat sumbu x yang merupakan persentil dari data yang telah diurutkan dan dibagi menjadi 10 bagian (decile). Sedangkan pada sumbu y, terdapat nilai mean attrition untuk masing-masing decile. Garis horizontal pada nilai 1 menunjukkan baseline, yaitu ketika tidak ada model yang digunakan.
+
+Warna dari setiap batang pada chart merepresentasikan kinerja model pada masing-masing decile. Semakin tinggi batang, semakin baik kinerja model pada decile tersebut. Midpoints pada setiap batang menunjukkan posisi tengah dari masing-masing decile.
+
+Dalam kode tersebut, variabel heights menunjukkan rasio antara mean response (yaitu rata-rata prediksi model) dibagi dengan rata-rata Attrition aktual pada setiap decile. Kemudian, fungsi barplot() digunakan untuk membuat plot dengan variabel heights sebagai inputnya. Selain itu, names.arg digunakan untuk memberikan label pada sumbu x, ylim untuk mengatur rentang sumbu y, col untuk mengatur warna dari batang, xlab untuk memberikan label pada sumbu x, ylab untuk memberikan label pada sumbu y, dan main untuk memberikan judul pada plot.
+
+
+
+## Removing unnecessary columns
+```{r}
+hr_data$StandardHours<- NULL
+hr_data$EmployeeCount<- NULL
+hr_data$Over18<- NULL
+hr_data$EmployeeNumber<- NULL
+```
+
+Kode tersebut menghapus beberapa kolom dalam dataframe hr_data menggunakan operator $.
+
+Pertama, hr_data$StandardHours<- NULL menghapus kolom StandardHours. Kemudian, hr_data$EmployeeCount<- NULL menghapus kolom EmployeeCount. Selanjutnya, hr_data$Over18<- NULL menghapus kolom Over18. Terakhir, hr_data$EmployeeNumber<- NULL menghapus kolom EmployeeNumber.
+
+Penghapusan kolom tersebut mungkin dilakukan karena tidak relevan atau tidak dibutuhkan dalam analisis yang akan dilakukan. Misalnya, kolom StandardHours memiliki nilai yang sama untuk setiap baris, sehingga tidak memberikan informasi yang berguna dalam analisis. Sedangkan kolom Over18 mungkin tidak perlu dipertimbangkan karena diasumsikan semua karyawan sudah berusia di atas 18 tahun. Kolom EmployeeNumber juga mungkin tidak diperlukan jika nomor karyawan tidak memberikan informasi yang berguna dalam analisis.
+
+
+## Data Partition
+```{r}
+row<- seq(1,nrow(hr_data),1)
+set.seed(10)
+train_rows<- sample(row, 0.7*nrow(hr_data))
+train <- hr_data[train_rows, ]
+valid <- hr_data[-train_rows, ]
+```
+
+Pada kode di atas, pertama-tama kita membuat vektor row yang berisi nomor baris dari hr_data menggunakan fungsi seq(). Kemudian, kita menentukan set.seed(10) untuk menghasilkan nilai acak yang dapat direproduksi ketika kita menjalankan kode ini di kemudian hari. Selanjutnya, kita menggunakan fungsi sample() untuk membuat objek train_rows yang berisi nomor baris secara acak dari row yang akan digunakan sebagai data latih.
+
+Data latih train kemudian dibuat dengan menggunakan vektor train_rows yang diambil dari hr_data menggunakan tanda kurung siku [ ]. Objek valid kemudian dibuat dengan mengambil semua baris di hr_data kecuali baris yang dipilih sebagai data latih.
+
+Dalam hal ini, data latih terdiri dari 70% dari total baris di hr_data dan data validasi terdiri dari 30% sisanya. Data latih digunakan untuk melatih model dan data validasi digunakan untuk menguji model yang telah dilatih.
+
+
+
+
+### Normalize the data
+##  Estimate preprocessing parameters
+```{r}
+library(caret)
+norm.values  <- preProcess(train, method = c("center", "scale"))
+```
+
+Pada kode di atas, dilakukan preprocessing data dengan menggunakan library caret pada dataset train. Fungsi preProcess() digunakan untuk melakukan normalisasi data. Pada kode di atas, normalisasi yang digunakan adalah centering dan scaling. Normalisasi ini dilakukan untuk memastikan bahwa range nilai antar variabel dalam dataset yang digunakan tidak terlalu jauh. Hal ini diperlukan agar proses training model yang dilakukan pada data tersebut lebih efektif dan akurat.
+
+Hasil dari preprocessing ini adalah nilai mean dan standar deviasi dari masing-masing variabel pada dataset train. Nilai ini digunakan nanti untuk melakukan normalisasi pada dataset train dan validasi sebelum dilakukan proses training dan evaluasi model.
+
+
+
+
+## Transform the data using the estimated parameters
+```{r}
+train.norm <- predict(norm.values, train)
+valid.norm <- predict(norm.values, valid)
+```
+
+Pada kode tersebut, data train dan valid di-normalisasi dengan menggunakan fungsi preProcess() dari paket caret. Proses normalisasi dilakukan dengan metode "center" dan "scale", yang berarti data akan dikurangi dengan nilai rata-ratanya dan dibagi dengan simpangan baku (standar deviasi) nya.
+
+Setelah proses normalisasi, fungsi predict() digunakan untuk mengaplikasikan normalisasi pada data train dan valid dengan menggunakan objek normalisasi norm.values. Output dari kedua fungsi predict() ini adalah data numerik yang telah dinormalisasi
+
+
+
+## run lda()
+```{r}
+library(MASS)
+lda1 <- lda(Attrition~., data = train.norm)
+lda1$counts
+```
+
+Pada kode di atas, dilakukan pembuatan model Linear Discriminant Analysis (LDA) dengan menggunakan fungsi lda() dari paket MASS. LDA merupakan salah satu metode dalam klasifikasi yang berguna untuk memprediksi kategori variabel respon dengan memanfaatkan informasi yang terkandung pada beberapa variabel prediktor.
+
+Pada sintaks lda(Attrition~., data = train.norm), variabel respon yang digunakan adalah Attrition, dan variabel prediktor yang digunakan adalah semua variabel yang tersedia dalam train.norm dengan menggunakan operator .. Lalu, model LDA disimpan dalam objek lda1.
+
+Pada output lda1$counts, terdapat informasi mengenai jumlah observasi dalam masing-masing kategori variabel respon yang digunakan untuk training data.
+
+Hasil output lda1$counts menunjukkan jumlah data untuk masing-masing kategori pada variabel target, yaitu Attrition. Output tersebut menunjukkan bahwa kelas "No" memiliki 858 data, sedangkan kelas "Yes" memiliki 171 data dalam dataset training setelah proses normalisasi dilakukan
+
+
+```{r}
+lda1
+```
+Kode lda1 adalah sintaks untuk menampilkan hasil analisis Linear Discriminant Analysis (LDA) pada data train.norm dengan menggunakan formula Attrition~.. LDA merupakan teknik analisis multivariat yang berguna untuk membedakan dua atau lebih kelompok (disebut juga kelas) dengan memanfaatkan kombinasi linear dari beberapa variabel prediktor.
+
+Pada output dari lda1, kita dapat melihat beberapa informasi di antaranya:
+
+Atribut prior menunjukkan distribusi proporsi kelas di dalam data training.
+Atribut counts menunjukkan banyaknya observasi yang dikelompokkan pada setiap kelas.
+Atribut means menunjukkan rata-rata dari variabel prediktor pada setiap kelas.
+Atribut scaling menunjukkan koefisien skalabilitas yang digunakan dalam pemodelan.
+Atribut call menunjukkan sintaks LDA yang digunakan untuk melakukan analisis.
+Selain itu, kita juga dapat melihat Proportion of trace dan Accuracy yang merupakan hasil evaluasi dari model LDA. Proporsi jejak menunjukkan proporsi varian pada data yang dapat dijelaskan oleh model LDA, sedangkan akurasi menunjukkan tingkat ketepatan klasifikasi model terhadap data. Semakin tinggi proporsi jejak dan akurasi, semakin baik model LDA tersebut dalam memprediksi kelas pada data training.
+
+
+
+
+
+```{r}
+prop.ld1 = lda1$svd^2/sum(lda1$svd^2)
+prop.ld1
+```
+Kode prop.ld1 = lda1$svd^2/sum(lda1$svd^2) digunakan untuk menghitung proporsi variansi yang dijelaskan oleh masing-masing komponen dari model LDA yang diperoleh melalui fungsi lda() dari paket MASS.
+
+Output dari kode tersebut adalah sebuah vektor numerik yang menunjukkan proporsi variansi yang dijelaskan oleh masing-masing komponen. Angka pertama menunjukkan proporsi variansi yang dijelaskan oleh komponen pertama, angka kedua menunjukkan proporsi variansi yang dijelaskan oleh komponen kedua, dan seterusnya.
+
+Dalam analisis LDA, variansi yang dijelaskan oleh masing-masing komponen sangat penting karena masing-masing komponen diurutkan menurut besarnya variansi yang dijelaskan. Oleh karena itu, proporsi variansi yang dijelaskan oleh masing-masing komponen membantu dalam menentukan jumlah komponen yang perlu dipertahankan untuk menghasilkan model yang optimal.
+
+
+
+
+## predict - using training data and plot
+```{r}
+pred1.train <- predict(lda1, train.norm)
+ldahist(data = pred1.train$x[,1], g = train.norm$Attrition)
+```
+Kode pred1.train <- predict(lda1, train.norm) digunakan untuk memprediksi nilai response berdasarkan model LDA yang telah dibuat (lda1) pada data training yang sudah dinormalisasi (train.norm). Kemudian, output dari hasil prediksi tersebut akan digunakan untuk membuat histogram dengan menggunakan fungsi ldahist().
+
+Fungsi ldahist() sendiri merupakan fungsi khusus dari paket MASS untuk membuat histogram dari nilai prediksi LDA. Pada kode tersebut, argumen pertama data diisi dengan nilai dari variable x untuk LDA pertama (x[,1]) dari output hasil prediksi (pred1.train), yang merepresentasikan nilai prediksi dari class "No". Sedangkan argumen kedua g diisi dengan nilai response yang sebenarnya dari data training (train.norm$Attrition), yang akan digunakan untuk membedakan warna pada histogram antara kelas "No" dan "Yes".
+
+Histogram tersebut memiliki dua kolom, yang masing-masing mewakili distribusi diskriminan fungsi linear pada kelas Attrition = Yes dan Attrition = No. Terlihat bahwa distribusi diskriminan fungsi linear pada kelas Attrition = Yes cenderung lebih besar dibandingkan dengan distribusi pada kelas Attrition = No. Hal ini menunjukkan bahwa model LDA cenderung lebih "mengenali" karyawan yang berpotensi mengalami attrition (Attrition = Yes) dibandingkan dengan karyawan yang tidak berpotensi mengalami attrition (Attrition = No).
+
+
+
+
+
+```{r}
+pred2.valid <- predict(lda1, valid.norm)
+names(pred2.valid)
+
+```
+Pada kode tersebut, dilakukan prediksi menggunakan model LDA yang telah dilatih sebelumnya pada data validasi (valid.norm). Output yang dihasilkan adalah nama-nama variabel pada objek pred2.valid, yang menunjukkan variabel apa saja yang ada pada objek tersebut. Nama-nama variabel tersebut menunjukkan prediksi kelas, posterior probability, dan nilai linear discriminant.
+
+
+
+
+## Model accuracy
+```{r}
+table(pred2.valid$class, valid.norm$Attrition)  
+```
+
+Kode tersebut melakukan prediksi menggunakan model LDA yang telah dilatih pada data training pada data validasi dan menghasilkan confusion matrix antara prediksi kelas dengan kelas aktual pada data validasi.
+
+pred2.valid adalah hasil prediksi menggunakan model LDA pada data validasi. pred2.valid$class adalah vektor kelas hasil prediksi model LDA pada data validasi. valid.norm$Attrition adalah vektor kelas aktual pada data validasi.
+
+Kemudian, table(pred2.valid$class, valid.norm$Attrition) digunakan untuk membuat confusion matrix antara kelas prediksi dengan kelas aktual pada data validasi. Di sini, baris menunjukkan kelas prediksi, dan kolom menunjukkan kelas aktual. Oleh karena itu, diagonal utama (dari kiri atas ke kanan bawah) adalah jumlah prediksi yang benar, dan elemen di luar diagonal utama adalah jumlah prediksi yang salah.
+
+ table(pred2.valid$class, valid.norm$Attrition) digunakan untuk membuat tabel kontingensi yang menunjukkan jumlah pengamatan yang diklasifikasikan ke setiap kategori prediksi dan kategori aktual dalam data validasi.
+
+Output tabel menunjukkan jumlah pengamatan yang diklasifikasikan dengan benar dan salah ke dalam dua kategori, yaitu No (tidak berpindah) dan Yes (berpindah). Diagonal utama tabel menunjukkan jumlah pengamatan yang diklasifikasikan dengan benar, sementara sel lain menunjukkan jumlah pengamatan yang diklasifikasikan salah. Dengan demikian, matriks kontingensi memberikan informasi tentang tingkat akurasi model, dan dapat digunakan untuk menghitung metrik evaluasi model seperti akurasi, presisi, recall, F1-score, dan lainnya.
+
+
+
+```{r}
+mean(pred2.valid$class == valid.norm$Attrition)  
+```
+
+Kode di atas menggunakan fungsi mean() untuk menghitung rata-rata akurasi dari model LDA (Linear Discriminant Analysis) pada data validasi. Hasil output dari kode tersebut adalah rata-rata akurasi model LDA pada data validasi.
+
+Secara lebih spesifik, pred2.valid$class adalah vektor kelas hasil prediksi model LDA pada data validasi. Sedangkan valid.norm$Attrition adalah vektor kelas asli dari data validasi. pred2.valid$class == valid.norm$Attrition akan menghasilkan vektor berisi nilai boolean yang menunjukkan apakah setiap prediksi kelas sama dengan kelas asli. Fungsi mean() kemudian digunakan untuk menghitung rata-rata nilai benar (nilai boolean yang bernilai TRUE) dalam vektor tersebut, yang kemudian menghasilkan rata-rata akurasi model pada data validasi.
+
+
+
+```{r}
+sum(pred2.valid$posterior[, 1] >=.5)
+
+```
+
+Kode sum(pred2.valid$posterior[, 1] >=.5) digunakan untuk menghitung jumlah data pada set validasi yang diprediksi sebagai non-attrition (kelas "No") oleh model LDA. Pada dasarnya, LDA menghasilkan posterior probability (probabilitas posterior) untuk setiap sampel pada set validasi dan kemudian memprediksi kelas dengan memilih kelas yang memiliki probabilitas posterior tertinggi.
+
+Dalam kasus ini, kode tersebut menghitung jumlah sampel pada set validasi yang diprediksi sebagai non-attrition (kelas "No") dengan membandingkan probabilitas posterior kelas "No" (kolom pertama dari pred2.valid$posterior) dengan nilai ambang (threshold) 0,5. Jika probabilitas posterior kelas "No" lebih besar atau sama dengan 0,5, maka sampel diprediksi sebagai non-attrition. Jumlah sampel pada set validasi yang memenuhi kondisi ini kemudian dihitung menggunakan fungsi sum().
+
+Dengan begitu, nilai output dari kode tersebut adalah jumlah sampel pada set validasi yang diprediksi sebagai non-attrition oleh model LDA dengan probabilitas posterior kelas "No" yang lebih besar atau sama dengan 0,5.
+
+
+
+
+
+```{r}
+sum(pred2.valid$posterior[, 1] >=.75)
+
+```
+
+Pada kode sum(pred2.valid$posterior[, 1] >=.75), dilakukan perhitungan jumlah karyawan yang diprediksi akan keluar (diwakili oleh nilai 1 pada posterior probability kelas "Yes") dengan menggunakan threshold atau ambang batas sebesar 0.75. Dalam kasus ini, posterior probability kelas "Yes" yang lebih besar dari atau sama dengan 0.75 akan diklasifikasikan sebagai karyawan yang akan keluar.
+
+Output yang dihasilkan merupakan jumlah karyawan yang diprediksi akan keluar dengan menggunakan ambang batas 0.75.
+
+
+
+
+## lift chart
+```{r}
+
+library(gains)
+gain <- gains(as.numeric(valid.norm$Attrition), pred2.valid$x[,1], groups = 10)
+
+
+```
+
+Kode tersebut menggunakan package gains untuk membuat lift chart atau chart kenaikan dalam model prediksi yang telah dibuat sebelumnya pada variabel pred2.valid. Lift chart akan menunjukkan berapa kali perbandingan keberhasilan model dibandingkan dengan model acak atau tanpa model, dimana angka di sebelah sumbu y (cumulative) menunjukkan kenaikan dalam keberhasilan model dan angka di sumbu x (cases) menunjukkan jumlah data atau jumlah kasus.
+
+Pada kode tersebut, as.numeric(valid.norm$Attrition) dan pred2.valid$x[,1] digunakan untuk menentukan nilai aktual dan prediksi pada data validasi. Kemudian, groups = 10 digunakan untuk menentukan jumlah grup yang akan digunakan dalam pembuatan lift chart.
+
+Setelah itu, hasil perhitungan akan disimpan pada variabel gain, yang nantinya akan digunakan untuk membuat plot lift chart pada kode selanjutnya.
+
+
+
+
+## Gains
+```{r}
+valid.norm$Attrition<- as.numeric(valid.norm$Attrition)
+plot(c(0,gain$cume.pct.of.total*sum(valid.norm$Attrition))~c(0,gain$cume.obs), 
+     xlab="Cases", ylab="Cumulative Lift", main="LIFT CHART", 
+     col = "blue1", type="l")
+lines(c(0,sum(valid.norm$Attrition))~c(0, dim(valid)[1]), lty = 9)
+```
+Kode di atas digunakan untuk membuat grafik lift chart. Lift chart digunakan untuk memvisualisasikan kinerja model dengan membandingkan antara rasio kumulatif hasil positif aktual terhadap rasio kumulatif hasil positif prediksi dari model di atas dataset yang diuji.
+
+Penjelasan hasil output dari kode di atas adalah sebagai berikut:
+
+gain adalah variabel yang berisi informasi lift chart yang dihitung menggunakan fungsi gains().
+valid.norm$Attrition akan diubah menjadi vektor numerik menggunakan as.numeric(valid.norm$Attrition), yang akan digunakan sebagai variabel target.
+Plot dilakukan dengan fungsi plot() dan lines(), di mana sumbu x dan y masing-masing menunjukkan kumulatif jumlah kasus dan kumulatif lift.
+Kurva biru menunjukkan lift chart, sedangkan garis putus-putus menunjukkan baseline lift chart (jika tidak ada model yang digunakan). Semakin tinggi kurva biru, semakin baik performa model. Semakin tinggi nilai lift pada sumbu y, semakin efektif model dalam memprediksi hasil positif aktual.
+
+Output dari kode tersebut adalah grafik lift chart. Lift chart adalah alat yang berguna untuk memvisualisasikan performa model prediksi. Grafik tersebut menunjukkan seberapa baik model bekerja dibandingkan dengan model acak. Grafik tersebut menunjukkan rasio antara tingkat respon aktual dan tingkat respon yang diprediksi oleh model, sebagai fungsi dari jumlah observasi yang diuji.
+
+Grafik ini memiliki dua garis:
+
+Garis biru menunjukkan lift chart aktual. Ini adalah perbandingan antara model yang dipilih dengan membagi populasi ke dalam kategori dan acak yang dihitung tanpa mempertimbangkan kategori tersebut. Ini menunjukkan tingkat peningkatan respon aktual yang diberikan oleh model untuk setiap kelompok observasi.
+Garis putus-putus menunjukkan lift chart acak. Ini adalah rasio antara tingkat respon aktual dan tingkat respon acak yang diprediksi oleh model.
+Dalam grafik lift chart, semakin dekat garis biru ke atas maka semakin baik performa model. Pada titik tertentu, memilih model tidak akan memberikan keuntungan yang signifikan dibandingkan dengan memilih orang secara acak. Jika grafik lift chart menurun, itu berarti model yang dipilih lebih buruk daripada memilih orang secara acak.
+
+
+
+
+
+## Plot decile-wise chart
+```{r}
+heights <- gain$mean.resp/mean(valid.norm$Attrition)
+barplot(heights, names.arg = gain$depth,  ylim = c(0,2),  
+                 xlab = "Percentile", ylab = "Leave Response", 
+                 main = "Decile chart")
+```
+Kode di atas digunakan untuk membuat decile chart yang menunjukkan persentase dari populasi yang merespon dengan meninggalkan perusahaan pada setiap decile atau kelompok 10 persen dari data.
+
+Hasil output berupa grafik barplot dengan sumbu x menunjukkan kelompok decile dan sumbu y menunjukkan tinggi batang yang merepresentasikan rasio antara jumlah karyawan yang meninggalkan perusahaan dengan jumlah total karyawan dalam kelompok tersebut dibandingkan dengan rasio keseluruhan populasi. Grafik ini memberikan gambaran yang lebih jelas tentang seberapa banyak karyawan yang mungkin meninggalkan perusahaan pada setiap kelompok decile, dan memberikan informasi yang berguna untuk mengambil keputusan bisnis.
+
+Nilai heights adalah rasio antara mean.resp dan mean(valid.norm$Attrition). mean.resp adalah rerata respons positif (Attrition = 1) untuk setiap decile, sementara mean(valid.norm$Attrition) adalah rata-rata dari seluruh populasi karyawan yang meninggalkan perusahaan. Kita ingin melihat rasio antara jumlah karyawan yang meninggalkan perusahaan dengan jumlah total karyawan dalam kelompok tersebut dibandingkan dengan rasio keseluruhan populasi. Jika nilai heights lebih besar dari 1, maka kelompok decile tersebut cenderung memiliki kecenderungan lebih tinggi untuk meninggalkan perusahaan.
+
+
+
+## kredit : Muhammad Rendy Saputra
